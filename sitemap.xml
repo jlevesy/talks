@@ -2,10 +2,24 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://jlevesy.github.io/intro-to-k8s/categories/</loc>
+    <loc>https://jlevesy.github.io/talks/intro-to-k8s/introduction/</loc>
   </url><url>
-    <loc>https://jlevesy.github.io/intro-to-k8s/</loc>
+    <loc>https://jlevesy.github.io/talks/intro-to-k8s/cluster/</loc>
   </url><url>
-    <loc>https://jlevesy.github.io/intro-to-k8s/tags/</loc>
+    <loc>https://jlevesy.github.io/talks/intro-to-k8s/workload/</loc>
+  </url><url>
+    <loc>https://jlevesy.github.io/talks/intro-to-k8s/network/</loc>
+  </url><url>
+    <loc>https://jlevesy.github.io/talks/intro-to-k8s/ingress/</loc>
+  </url><url>
+    <loc>https://jlevesy.github.io/talks/intro-to-k8s/conclusion/</loc>
+  </url><url>
+    <loc>https://jlevesy.github.io/talks/categories/</loc>
+  </url><url>
+    <loc>https://jlevesy.github.io/talks/intro-to-k8s/</loc>
+  </url><url>
+    <loc>https://jlevesy.github.io/talks/</loc>
+  </url><url>
+    <loc>https://jlevesy.github.io/talks/tags/</loc>
   </url>
 </urlset>

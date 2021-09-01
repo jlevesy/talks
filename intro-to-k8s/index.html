@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>Introduction ot Kubernetes</title>
+
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/talks/reveal-js/css/reset.css">
+<link rel="stylesheet" href="/talks/reveal-js/css/reveal.css"><link rel="stylesheet" href="/talks/reveal-js/css/theme/black.css" id="theme">
+<link rel="stylesheet" href="/talks/highlight-js/default.min.css">
+    
+  </head>
+  <body>
+    
+    <div class="reveal">
+      <div class="slides">
+  
+
+    <section><h1 id="introduction-to-kubernetes">Introduction To Kubernetes</h1>
+<p>Thursday September 2 - UCon 2021</p>
+</section>
+
+  
+
+    <section>
+
+<section data-shortcode-section>
+<h2 id="how-did-we-end-up-here">How did we end up here?</h2>
+</section><section>
+<h3 id="problems-were-trying-to-solve">Problems we&rsquo;re trying to solve</h3>
+<ul>
+<li>High Availability</li>
+<li>Scalability</li>
+</ul>
+</section><section>
+<h3 id="how-are-we-trying-to-solving-those">How are we (trying to) solving those?</h3>
+<ul>
+<li>Distributed systems</li>
+<li>Make a set of host act like a large one</li>
+</ul>
+</section><section>
+<h3 id="in-the-context-of-application-hosting">In the context of application hosting</h3>
+<ul>
+<li>Containers reduced the friction of running apps</li>
+<li>They make the workload more flexible,
+<ul>
+<li>it&rsquo;s &ldquo;easy&rdquo; to move on application to another hosts</li>
+</ul>
+</li>
+<li>So why not delegate workload management to a computer?</li>
+</ul>
+</section><section>
+<h3 id="hello-orchestrators">Hello Orchestrators</h3>
+<p>They manage automatically the execution of a given workload on set of hosts</p>
+</section><section>
+<h3 id="existing-implementations">Existing Implementations</h3>
+<ul>
+<li>Docker Swarm</li>
+<li>Fleet</li>
+<li>Hashicorp</li>
+<li>Kubernetes (k8s)</li>
+</ul>
+</section><section>
+<h3 id="disclaimer">Disclaimer</h3>
+<ul>
+<li>
+<p>Kubernetes is a <strong>very</strong> complex beast.</p>
+</li>
+<li>
+<p>I will <small>(voluntarily or by plain ignorance)</small> omit lot of aspects of it.</p>
+</li>
+<li>
+<p>I&rsquo;m not at ease giving talks, please be kind :-).</p>
+</li>
+</ul>
+
+</section>
+</section>
+    <section>
+
+<section data-shortcode-section>
+<h2 id="hello-kubernetes">Hello Kubernetes</h2>
+</section><section>
+<h3 id="cluster-and-nodes">Cluster And Nodes</h3>
+<ul>
+<li>In k8s, a host is actually called a <strong>Node</strong>.</li>
+<li>A group of node is called a <strong>Cluster</strong></li>
+</ul>
+</section><section>
+<h3 id="two-types-of-nodes">Two Types of Nodes</h3>
+<ul>
+<li>Data Plane: execute the workload</li>
+<li>Control Plane: execute the management logic</li>
+</ul>
+<p><small>(Sometimes one node can be both)</small></p>
+</section><section>
+<h3 id="data-plane-worker-nodes">Data Plane (Worker Nodes)</h3>
+<ul>
+<li>Execute the workload</li>
+<li>They run:
+<ul>
+<li>A kubelet agent</li>
+<li>A container runtime</li>
+<li>A kube-proxy agent</li>
+</ul>
+</li>
+</ul>
+<aside class="notes"><p>Kubelet agent: listen to pod specs and drives the container runtime so it guarantees that thoses specs are executed. In other word it manages the workload execution.</p>
+<p>Container runtime: implementation of &ldquo;containers&rdquo;, could be containerd, CRI-O, docker (now deprecated)&hellip;</p>
+<p>Kube-proxy agent: reflects the network topology on the node. More on this in a little while.</p>
+</aside>
+</section><section>
+<h3 id="control-plane">Control Plane</h3>
+<p>Makes sure that the cluster state is the same than the desired state</p>
+<ul>
+<li>They run:
+<ul>
+<li>A storage backend (<code>etcd</code> in many cases)</li>
+<li><code>kube-apiserver</code></li>
+<li><code>kube-scheduler</code></li>
+<li><code>kube-controller-manager</code></li>
+<li><code>cloud-controller-manager</code></li>
+</ul>
+</li>
+</ul>
+<aside class="notes"><p><code>etcd</code> as main storage (or some other stoage layers in other distributions)
+<code>kube-apiserver</code> serves the kubernetes API.
+<code>kube-scheduler</code> dispatches newly created pods to nodes.
+<code>kube-controller-manager</code> runs k8s main control loops.
+<code>cloud-controller-manager</code> control loops that interacts with the cloud provider environment.</p>
+</aside>
+</section><section>
+<h3 id="control-loops">Control Loops?</h3>
+<ul>
+<li>k8s is a declarative system (!= imperative)
+<ul>
+<li>User declares a desired state and the system takes actions to converge to this new state.</li>
+</ul>
+</li>
+<li>Desired state is described through kubernetes objects.
+<ul>
+<li>Pod, Deployement, Service and so on&hellip;</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<ul>
+<li>
+<p>Control plane executes a set of control loops to subsystems of the cluster.</p>
+<ul>
+<li>PodScheduler, DeploymentController &hellip;</li>
+</ul>
+</li>
+<li>
+<p>They watch a subset of resources and take necessary actions to make the system converge to the desired state.</p>
+</li>
+<li>
+<p>A good analogy is a thermostat in a room.</p>
+</li>
+</ul>
+</section><section>
+<ul>
+<li>Highly extensible design:
+<ul>
+<li>You can add as many controllers as you want</li>
+<li>You can define new resource types</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="example">Example</h3>
+<p>Let&rsquo;s create a k8s cluster based on <a href="https://rancher.com/docs/k3s/latest/en/">k3s</a></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="nohighlight" data-noescape>k3d cluster create --agents<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span> -p <span style="color:#e6db74">&#39;8080:30001@agent[0]&#39;</span>
+
+<span style="color:#75715e"># [...]</span>
+
+kubectl config use-context k3d-k3s-default
+k get nodes
+</code></pre></div><aside class="notes"><ul>
+<li>k3s is a lightweight distribution of k8s, packed in a single library.</li>
+<li>k3d is an helper tool that allows to create and manipulate k3s in docker clusters in a breeze</li>
+<li>On OSX, docker4Mac provides a built-in kubernetes support.</li>
+</ul>
+</aside>
+
+</section>
+</section>
+    <section>
+
+<section data-shortcode-section>
+<h2 id="describing-the-workload">Describing The Workload</h2>
+</section><section>
+<h3 id="the-atom-the-pod">The Atom: The Pod</h3>
+<ul>
+<li>It&rsquo;s a &ldquo;virtual host&rdquo;</li>
+<li>Has one or more container</li>
+<li>Has one or more volumes linked to it</li>
+<li>Has one IP address</li>
+<li>Provides a sh*tload of options to control it&rsquo;s lifecycle</li>
+</ul>
+<aside class="notes"><p>=&gt; (probes, topology, resourceLimits, disruption budgets&hellip;)</p>
+</aside>
+</section><section>
+<h3 id="pod-lifecycle-12">Pod Lifecycle (1/2)</h3>
+<ul>
+<li>Pod: Pending =&gt; Running =&gt; Succeeded OR Failed</li>
+<li>Container: Waiting =&gt; Running Or Terminated</li>
+</ul>
+</section><section>
+<h3 id="pod-lifecycle-22">Pod Lifecycle (2/2)</h3>
+<ul>
+<li>Succeeded OR Failed are final states.
+<ul>
+<li>If a pod fails another one needs to be created!</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="lets-create-a-pod">Let&rsquo;s create a Pod</h3>
+<p>Pod Manifest</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="nohighlight" data-noescape>---
+<span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+<span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+<span style="color:#f92672">metadata</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">toolbox-runtime</span>
+<span style="color:#f92672">spec</span>:
+  <span style="color:#f92672">containers</span>:
+    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">runtime</span>
+      <span style="color:#f92672">image</span>: <span style="color:#ae81ff">giantswarm/tiny-tools</span>
+      <span style="color:#f92672">command</span>:
+        - <span style="color:#ae81ff">sleep</span>
+        - <span style="color:#ae81ff">infinity</span>
+</code></pre></div><p>Applying the Manifest</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="nohighlight" data-noescape>kubectl apply -f resources/pod.yaml
+</code></pre></div></section><section>
+<h3 id="what-happened-here-">What happened here ?</h3>
+<ul>
+<li>We created a new pod resource in the API server.</li>
+<li>The kube-scheduler picks this newly created pod.
+<ul>
+<li>Checks if there isn&rsquo;t already a pod running that satisfied this spec</li>
+<li>Assign a node to this pod</li>
+<li>Issues a pod spec to the selected node node kubelet.</li>
+<li>Kubelets instructs the container runtime to create the pod, and we get a running pod.</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="workload-management-12">Workload Management 1/2</h3>
+<ul>
+<li>When a node goes down, all pods scheduled to run on it are considered as failed.</li>
+<li>That&rsquo;s a bummer, we need to recreate our pods by hand!?</li>
+</ul>
+</section><section>
+<h3 id="workload-management-22">Workload Management 2/2</h3>
+<ul>
+<li>Fortunately no, k8s provides a set of built-in controllers to manage pods automatically.</li>
+<li>We have 4(6-ish) different types of resources to describe our workload.</li>
+</ul>
+</section><section>
+<h3 id="deployments-and-replicasets"><code>Deployments</code> and <code>ReplicaSets</code></h3>
+<ul>
+<li>
+<p>Designed to manage stateless pods</p>
+</li>
+<li>
+<p><code>Deployments</code> manages one or more <code>ReplicaSets</code></p>
+</li>
+<li>
+<p><code>ReplicaSets</code> maintains a set pods at a given spec.</p>
+</li>
+<li>
+<p>This design allows to achieve goals like zero downtime updates, by maintainting multiple <code>ReplicaSets</code> in parallel.</p>
+</li>
+</ul>
+<aside class="notes"><p>If a pod fails, the replicate recreates a new one.</p>
+</aside>
+</section><section>
+<h3 id="deployment-example"><code>Deployment Example</code></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="nohighlight" data-noescape>---
+<span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">apps/v1</span>
+<span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Deployment</span>
+<span style="color:#f92672">metadata</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">super-app</span>
+  <span style="color:#f92672">labels</span>:
+    <span style="color:#f92672">app</span>: <span style="color:#ae81ff">super-app</span>
+<span style="color:#f92672">spec</span>:
+  <span style="color:#f92672">replicas</span>: <span style="color:#ae81ff">3</span>
+  <span style="color:#f92672">selector</span>:
+    <span style="color:#f92672">matchLabels</span>:
+      <span style="color:#f92672">app</span>: <span style="color:#ae81ff">super-app</span>
+  <span style="color:#f92672">template</span>:
+    <span style="color:#f92672">metadata</span>:
+      <span style="color:#f92672">labels</span>:
+        <span style="color:#f92672">app</span>: <span style="color:#ae81ff">super-app</span>
+    <span style="color:#f92672">spec</span>:
+      <span style="color:#f92672">containers</span>:
+      - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">app</span>
+        <span style="color:#f92672">image</span>: <span style="color:#ae81ff">traefik/whoami:v1.6.0</span>
+        <span style="color:#f92672">ports</span>:
+        - <span style="color:#f92672">containerPort</span>: <span style="color:#ae81ff">80</span>
+</code></pre></div></section><section>
+<h3 id="statefulset"><code>StatefulSet</code></h3>
+<ul>
+<li>Designed to manages Stateful applications (databases?)</li>
+<li>From docs
+<ul>
+<li>Stable, unique network identifiers.</li>
+<li>Stable, persistent storage.</li>
+<li>Ordered, graceful deployment and scaling.</li>
+<li>Ordered, automated rolling updates.</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="daemonset"><code>DaemonSet</code></h3>
+<ul>
+<li>Ensures that all (or some) nodes run a copy of a pod.</li>
+</ul>
+</section><section>
+<h3 id="job-and-cronjobs"><code>Job</code> And <code>CronJobs</code></h3>
+<ul>
+<li><code>Job</code> manage one shot executions of a pod and make sure they succeed</li>
+<li><code>CronJob</code> creates <code>Job</code> instances in a regular maner.</li>
+</ul>
+
+</section>
+</section>
+    <section>
+
+<section data-shortcode-section>
+<h2 id="exposing-workloads-on-the-network">Exposing workloads on the network</h2>
+</section><section>
+<h3 id="kubernetes-networking-model-13">Kubernetes Networking Model (1/3)</h3>
+<ul>
+<li>Port Binding
+<ul>
+<li>
+<p>Each Pod/Contianer binds a port on the host</p>
+<ul>
+<li>ex: <code>:8080 goes to container app-instance-1</code></li>
+</ul>
+</li>
+<li>
+<p>Requires careful management and sometimes creates nasty problems.</p>
+</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="kubernetes-networking-model-23">Kubernetes Networking Model (2/3)</h3>
+<ul>
+<li>k8s uses another approach:
+<ul>
+<li>One Pod gets One IP</li>
+<li>An pod can reach another pod without NAT, whether it is on the same node or a different one</li>
+<li>Delegated to CNI (Container Network Interface) implementations.
+<ul>
+<li>k3s uses flannel, EKS runs a solution based on VPC.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="kubernetes-networking-model-33">Kubernetes Networking Model (3/3)</h3>
+<ul>
+<li>TLDR: I can hit a pod from another pod knowing it&rsquo;s IP.</li>
+</ul>
+</section><section>
+<h3 id="hello-services-12">Hello Services (1/2)</h3>
+<ul>
+<li>By itself model is not satisfying.
+<ul>
+<li>If my container goes down, its IP might change, how do I discover it again?</li>
+<li>How do we deal with loadbalancing?</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="hello-services-22">Hello Services (2/2)</h3>
+<ul>
+<li>k8s provides another resource, called <code>Services</code>, to handle this.</li>
+<li>A service allow to address a set of pods, matching a selector.
+<ul>
+<li>It gives a stable IP to this set of pods</li>
+<li>Optionally, a DNS name if the clusters supports it.</li>
+<li>Each connection to the VirtualIP gets balanced to one of the matched pods.</li>
+</ul>
+</li>
+<li>It allows to decouple the client from the server itself
+<ul>
+<li>if the set of pod changes, the client isn&rsquo;t impacted</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="service-example">Service Example</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="nohighlight" data-noescape>---
+<span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+<span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Service</span>
+<span style="color:#f92672">metadata</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">super-app</span>
+<span style="color:#f92672">spec</span>:
+  <span style="color:#f92672">selector</span>:
+    <span style="color:#f92672">app</span>: <span style="color:#ae81ff">super-app</span>
+  <span style="color:#f92672">ports</span>:
+    - <span style="color:#f92672">protocol</span>: <span style="color:#ae81ff">TCP</span>
+      <span style="color:#f92672">port</span>: <span style="color:#ae81ff">80</span>
+      <span style="color:#f92672">targetPort</span>: <span style="color:#ae81ff">80</span>
+</code></pre></div></section><section>
+<h3 id="what-happened-here-12">What Happened Here? (1/2)</h3>
+<ul>
+<li>We created a service that selects all the pods from our previous deployment based on their label</li>
+<li>The service gets automatically a VirtualIP</li>
+<li>It gets also a stable DNS name (because DNS is enabled)
+<ul>
+<li><code>&lt;svc&gt;.&lt;namespace&gt;.svc.cluster.local</code></li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="what-happened-here-22">What Happened Here? (2/2)</h3>
+<ul>
+<li>The endpoint controller picks up the service and populates an endpoint object for this service with the IPs of all the matched pods.</li>
+<li>Kube-proxy configures all the nodes so they know how to route to the &ldquo;Virtual IP&rdquo;</li>
+<li>My other pod can talk to the &ldquo;service&rdquo; through its virtual IP and Domain Name</li>
+</ul>
+</section><section>
+<h3 id="how-services-are-implemented">How Services Are Implemented?</h3>
+<ul>
+<li>An <code>IP</code> that routes to 3 possible hosts? Whichcraft!</li>
+<li>There are 3 possible implementations:
+<ul>
+<li>User Space Proxy</li>
+<li>IPTables</li>
+<li>IPVS</li>
+</ul>
+</li>
+<li><code>kube-proxy</code> handles that on every workers</li>
+</ul>
+<aside class="notes"><ul>
+<li>User-Space proxy mode: Route all outgoing connections (via an iptable rule) to a local lvl4 (TCP/UDP) proxy process handles the connection then forward it to the right replica. More flexible, but the slowest and least reliable.</li>
+<li>iptables (default mode on common distros): kube-proxy alters the node iptable rules to handle the service IP and rewrite to one of the actual server pod IPs, based on the endpoints. No healthchecks, no advanced loadbalancing strategies.</li>
+<li>IPVS (default mode on k3s (not sure)?): another kernel implementation of transport level load balancing, provides retries, healthchecks, better scalability and diverse loadbalancing algorithms.</li>
+</ul>
+</aside>
+</section><section>
+<h3 id="service-discovery">Service Discovery?</h3>
+<ul>
+<li>How to discover services from one pod?
+<ul>
+<li>Environment variables are automatically propagated on container startup.</li>
+<li>DNS to provide deterministic domain name you can rely on.</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="exposing-services-service-types">Exposing Services: Service Types</h3>
+<p>Cool story for internal services, but how can I expose my apps outside?</p>
+<ul>
+<li>Bind your pods to host ports: that&rsquo;s possible, but so 2014 :p</li>
+<li>Somehow leverage services to do this?
+<ul>
+<li>Hello services types!</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h4 id="clusterip">ClusterIP</h4>
+<ul>
+<li>Default mode, it creates a virtual IP reachable internally</li>
+<li>Doesn&rsquo;t expose the service externally.</li>
+</ul>
+</section><section>
+<h4 id="nodeport">NodePort</h4>
+<ul>
+<li>Superset of ClusterIP, it gets a virtual IP for internal traffic,</li>
+<li>Also opens a port on the host and routes all external trafic comming from that port to the service.</li>
+<li>LoadBalancing to nodes is still left to handle by the user.</li>
+</ul>
+<aside class="notes"><p>That&rsquo;s something we could use for Fleet to K8S communication, instead of a full blown LoadBalancer)</p>
+</aside>
+</section><section>
+<h4 id="nodeport-example">NodePort example</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="nohighlight" data-noescape>---
+<span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+<span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Service</span>
+<span style="color:#f92672">metadata</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">super-app-nodeport</span>
+<span style="color:#f92672">spec</span>:
+  <span style="color:#f92672">type</span>: <span style="color:#ae81ff">NodePort</span>
+  <span style="color:#f92672">selector</span>:
+    <span style="color:#f92672">app</span>: <span style="color:#ae81ff">super-app-nodeport</span>
+  <span style="color:#f92672">ports</span>:
+    - <span style="color:#f92672">protocol</span>: <span style="color:#ae81ff">TCP</span>
+      <span style="color:#f92672">port</span>: <span style="color:#ae81ff">80</span>
+      <span style="color:#f92672">targetPort</span>: <span style="color:#ae81ff">80</span>
+      <span style="color:#f92672">nodePort</span>: <span style="color:#ae81ff">30001</span>
+</code></pre></div></section><section>
+<h4 id="loadbalancers">LoadBalancers</h4>
+<ul>
+<li>Superset of NodePort service, VIP + External Port Binding.</li>
+<li>Also starts and configures automatically an external load balancer to the cloud environment.</li>
+<li>You get one or multiple ExternalIP (IP or domain name) that are reachable externally (and you don&rsquo;t have to care about it).</li>
+</ul>
+</section><section>
+<ul>
+<li>Implementation depends of your cluster environement</li>
+<li>On EKS each time you create a LoadBalancer service, AWS creates (and charges you for!) a CLB.</li>
+<li>k3s on Docker uses the the container IP as PublicIP.</li>
+</ul>
+
+</section>
+</section>
+    <section>
+
+<section data-shortcode-section>
+<h3 id="routing-ingress-traffic">Routing Ingress Traffic?</h3>
+</section><section>
+<h3 id="the-problem">The Problem</h3>
+<p>How to expose externally multiple applications on my cluster ?</p>
+<ul>
+<li>workflow.myapp.co</li>
+<li>ecommerce.myapp.co</li>
+</ul>
+</section><section>
+<h3 id="solutions">Solutions?</h3>
+<ul>
+<li>Create one NodePort service per app, and handle by hande external routing by hand.
+<ul>
+<li>Doesn&rsquo;t really leverages k8s capabilities.</li>
+<li>Hard to keep up to date?</li>
+</ul>
+</li>
+<li>Create one LoadBalancer service per app.
+<ul>
+<li>Not super efficient &hellip;and super expensive!</li>
+</ul>
+</li>
+<li>Maybe we could add an aditional level of routing when a request arrives to the cluster?</li>
+</ul>
+</section><section>
+<h3 id="hello-ingress-controllers">Hello Ingress Controllers</h3>
+<ul>
+<li>Controllers in charge of routing ingress traffic to backend pods.</li>
+<li>Run as workoad on the k8s cluster (often deployments).</li>
+<li>Exposed externally by a <code>NodePort</code> or <code>LoadBalancer</code> service.</li>
+<li>Allows to multiplex multiple services behind the same LoadBalancer.</li>
+</ul>
+</section><section>
+<ul>
+<li>
+<p>Brings interesting features</p>
+<ul>
+<li>Standarized HTTP routing (Host, Path, Headers&hellip;)</li>
+<li>HTTP Middlewares (Caching, Rate Limiting, Identifier Injection)</li>
+<li>TLS termination.</li>
+</ul>
+</li>
+<li>
+<p>Under the hood,</p>
+<ul>
+<li>Good old lvl4 or lvl7 reverse proxies that are dynamically configured by a set of kubernetes objects.</li>
+</ul>
+</li>
+<li>
+<p>Some known actors: NGinx ingress (we&rsquo;re using this), HAProxy, Traefik (default on k3s) &hellip;.</p>
+</li>
+</ul>
+</section><section>
+<h3 id="configuring-ingress-controllers">Configuring Ingress Controllers</h3>
+<ul>
+<li>Ingress Controllers can consume various kind of resources
+<ul>
+<li>Most common one is <code>Ingress</code>, became stable in 1.18</li>
+<li><a href="https://github.com/kubernetes-sigs/gateway-api">ServiceAPI</a> for more complex routing</li>
+<li>Some providers also defines their own CRDs.</li>
+</ul>
+</li>
+</ul>
+</section><section>
+<h3 id="ingress-example">Ingress Example</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="nohighlight" data-noescape><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">networking.k8s.io/v1</span>
+<span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Ingress</span>
+<span style="color:#f92672">metadata</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">super-app</span>
+  <span style="color:#f92672">annotations</span>:
+    <span style="color:#f92672">nginx.ingress.kubernetes.io/rewrite-target</span>: <span style="color:#ae81ff">/</span>
+<span style="color:#f92672">spec</span>:
+  <span style="color:#f92672">rules</span>:
+  - <span style="color:#f92672">http</span>:
+      <span style="color:#f92672">paths</span>:
+      - <span style="color:#f92672">path</span>: <span style="color:#ae81ff">/superapp</span>
+        <span style="color:#f92672">pathType</span>: <span style="color:#ae81ff">Prefix</span>
+        <span style="color:#f92672">backend</span>:
+          <span style="color:#f92672">service</span>:
+            <span style="color:#f92672">name</span>: <span style="color:#ae81ff">super-app</span>
+            <span style="color:#f92672">port</span>:
+              <span style="color:#f92672">number</span>: <span style="color:#ae81ff">80</span>
+</code></pre></div></section><section>
+<h3 id="what-happened-here">What Happened Here?</h3>
+<ul>
+<li>We created an Ingress resource that describes a rule to match all requests with the prefix <code>/superapp</code>
+and forward them to any endpoint of the service super-app on port 80.</li>
+<li>The ingress controller, Traefik in our case, picked this rule and configured itself to forward an requrest with path <code>/superapp</code> to one of the backends pods.</li>
+</ul>
+</section><section>
+<h3 id="bounce-bounce-bounce">Bounce Bounce Bounce</h3>
+<p>Let&rsquo;s sum up the life on an HTTP Request on our EKS cluster.</p>
+<ul>
+<li>Request hits AWS CLB, connection gets forwarded to one cluster node</li>
+<li>Request hits the node and the Nginx loadbalancer service port, gets bounced to one ingress controller instance (maybe not on the same node).</li>
+<li>Request hits the ingress controller, gets bounced to one on the backends (maybe not on the same node, again!).</li>
+</ul>
+</section><section>
+<p>TLDR; at worst, you get two network bounces to reach one instance of your application.</p>
+
+</section>
+</section>
+    <section>
+
+<section data-shortcode-section>
+<h4 id="things-i-didnt-talk-about">Things I didn&rsquo;t talk about</h4>
+<ul>
+<li>PVC, PV =&gt; Persistent Volumes Managent</li>
+<li>ConfigMaps and Secrets</li>
+<li>Namespaces and RBAC</li>
+<li>Service Meshes</li>
+<li>PDP</li>
+<li>CRDs</li>
+</ul>
+</section><section>
+<h4 id="thanks">Thanks!</h4>
+<ul>
+<li>Did you learn something?</li>
+<li>Questions?</li>
+</ul>
+
+</section>
+</section>
+
+</div>
+      
+
+    </div>
+<script type="text/javascript" src=/talks/reveal-hugo/object-assign.js></script>
+
+<a href="/talks/reveal-js/css/print/" id="print-location" style="display: none;"></a>
+<script type="text/javascript">
+  var printLocationElement = document.getElementById('print-location');
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.type = 'text/css';
+  link.href = printLocationElement.href + (window.location.search.match(/print-pdf/gi) ? 'pdf.css' : 'paper.css');
+  document.getElementsByTagName('head')[0].appendChild(link);
+</script>
+
+<script type="application/json" id="reveal-hugo-site-params">null</script>
+<script type="application/json" id="reveal-hugo-page-params">null</script>
+
+<script src="/talks/reveal-js/js/reveal.js"></script>
+
+<script type="text/javascript">
+  
+  
+  function camelize(map) {
+    if (map) {
+      Object.keys(map).forEach(function(k) {
+        newK = k.replace(/(\_\w)/g, function(m) { return m[1].toUpperCase() });
+        if (newK != k) {
+          map[newK] = map[k];
+          delete map[k];
+        }
+      });
+    }
+    return map;
+  }
+  
+  var revealHugoDefaults = { center: true, controls: true, history: true, progress: true, transition: "slide" };
+  var revealHugoSiteParams = JSON.parse(document.getElementById('reveal-hugo-site-params').innerHTML);
+  var revealHugoPageParams = JSON.parse(document.getElementById('reveal-hugo-page-params').innerHTML);
+  
+  var options = Object.assign({},
+    camelize(revealHugoDefaults),
+    camelize(revealHugoSiteParams),
+    camelize(revealHugoPageParams));
+  Reveal.initialize(options);
+</script>
+
+
+  
+  
+  <script type="text/javascript" src="/talks/reveal-js/plugin/markdown/marked.js"></script>
+  
+  <script type="text/javascript" src="/talks/reveal-js/plugin/markdown/markdown.js"></script>
+  
+  <script type="text/javascript" src="/talks/reveal-js/plugin/highlight/highlight.js"></script>
+  
+  <script type="text/javascript" src="/talks/reveal-js/plugin/zoom-js/zoom.js"></script>
+  
+  
+  <script type="text/javascript" src="/talks/reveal-js/plugin/notes/notes.js"></script>
+
+
+
+    
+    
+  </body>
+</html>
