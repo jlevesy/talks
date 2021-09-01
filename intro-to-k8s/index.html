@@ -66,15 +66,9 @@
 </section><section>
 <h3 id="disclaimer">Disclaimer</h3>
 <ul>
-<li>
-<p>Kubernetes is a <strong>very</strong> complex beast.</p>
-</li>
-<li>
-<p>I will <small>(voluntarily or by plain ignorance)</small> omit lot of aspects of it.</p>
-</li>
-<li>
-<p>I&rsquo;m not at ease giving talks, please be kind :-).</p>
-</li>
+<li>Kubernetes is a <strong>very</strong> complex beast.</li>
+<li>I will <small>(voluntarily or by plain ignorance)</small> omit lot of aspects of it.</li>
+<li>I&rsquo;m not at ease giving talks, please be kind :-).</li>
 </ul>
 
 </section>
@@ -109,7 +103,7 @@
 </li>
 </ul>
 <aside class="notes"><p>Kubelet agent: listen to pod specs and drives the container runtime so it guarantees that thoses specs are executed. In other word it manages the workload execution.</p>
-<p>Container runtime: implementation of &ldquo;containers&rdquo;, could be containerd, CRI-O, docker (now deprecated)&hellip;</p>
+<p>Container runtime: implementation of &ldquo;containers&rdquo;, could be Containerd, CRI-O, Docker (now deprecated)&hellip;</p>
 <p>Kube-proxy agent: reflects the network topology on the node. More on this in a little while.</p>
 </aside>
 </section><section>
@@ -126,7 +120,7 @@
 </ul>
 </li>
 </ul>
-<aside class="notes"><p><code>etcd</code> as main storage (or some other stoage layers in other distributions)
+<aside class="notes"><p><code>etcd</code> as main storage (or some storage layers in other distributions)
 <code>kube-apiserver</code> serves the kubernetes API.
 <code>kube-scheduler</code> dispatches newly created pods to nodes.
 <code>kube-controller-manager</code> runs k8s main control loops.
@@ -140,16 +134,16 @@
 <li>User declares a desired state and the system takes actions to converge to this new state.</li>
 </ul>
 </li>
-<li>Desired state is described through kubernetes objects.
+<li>Desired state is described through objects.
 <ul>
-<li>Pod, Deployement, Service and so on&hellip;</li>
+<li>Pod, Deployment, Service and so on&hellip;</li>
 </ul>
 </li>
 </ul>
 </section><section>
 <ul>
 <li>
-<p>Control plane executes a set of control loops to subsystems of the cluster.</p>
+<p>Control plane executes a set of loops to control the subsystems of the cluster.</p>
 <ul>
 <li>PodScheduler, DeploymentController &hellip;</li>
 </ul>
@@ -339,7 +333,7 @@ k get nodes
 <li>Port Binding
 <ul>
 <li>
-<p>Each Pod/Contianer binds a port on the host</p>
+<p>Each Pod/Container binds a port on the host</p>
 <ul>
 <li>ex: <code>:8080 goes to container app-instance-1</code></li>
 </ul>
@@ -359,7 +353,7 @@ k get nodes
 <li>An pod can reach another pod without NAT, whether it is on the same node or a different one</li>
 <li>Delegated to CNI (Container Network Interface) implementations.
 <ul>
-<li>k3s uses flannel, EKS runs a solution based on VPC.</li>
+<li>k3s uses flannel, EKS runs a proprietary solution based on VPC.</li>
 </ul>
 </li>
 </ul>
@@ -376,7 +370,7 @@ k get nodes
 <li>By itself model is not satisfying.
 <ul>
 <li>If my container goes down, its IP might change, how do I discover it again?</li>
-<li>How do we deal with loadbalancing?</li>
+<li>How do we deal with multiple replica and loadbalancing?</li>
 </ul>
 </li>
 </ul>
@@ -479,7 +473,7 @@ k get nodes
 <h4 id="nodeport">NodePort</h4>
 <ul>
 <li>Superset of ClusterIP, it gets a virtual IP for internal traffic,</li>
-<li>Also opens a port on the host and routes all external trafic comming from that port to the service.</li>
+<li>Also opens a port on the host and routes all external traffic coming to that port to the service.</li>
 <li>LoadBalancing to nodes is still left to handle by the user.</li>
 </ul>
 <aside class="notes"><p>That&rsquo;s something we could use for Fleet to K8S communication, instead of a full blown LoadBalancer)</p>
@@ -509,9 +503,9 @@ k get nodes
 </ul>
 </section><section>
 <ul>
-<li>Implementation depends of your cluster environement</li>
+<li>Implementation depends of your cluster environment</li>
 <li>On EKS each time you create a LoadBalancer service, AWS creates (and charges you for!) a CLB.</li>
-<li>k3s on Docker uses the the container IP as PublicIP.</li>
+<li>k3s on Docker uses host containers IP as public IP.</li>
 </ul>
 
 </section>
@@ -524,13 +518,17 @@ k get nodes
 <h3 id="the-problem">The Problem</h3>
 <p>How to expose externally multiple applications on my cluster ?</p>
 <ul>
+<li>For instance:
+<ul>
 <li>workflow.myapp.co</li>
 <li>ecommerce.myapp.co</li>
+</ul>
+</li>
 </ul>
 </section><section>
 <h3 id="solutions">Solutions?</h3>
 <ul>
-<li>Create one NodePort service per app, and handle by hande external routing by hand.
+<li>Create one NodePort service per app, and handle external routing manually.
 <ul>
 <li>Doesn&rsquo;t really leverages k8s capabilities.</li>
 <li>Hard to keep up to date?</li>
@@ -547,16 +545,16 @@ k get nodes
 <h3 id="hello-ingress-controllers">Hello Ingress Controllers</h3>
 <ul>
 <li>Controllers in charge of routing ingress traffic to backend pods.</li>
-<li>Run as workoad on the k8s cluster (often deployments).</li>
+<li>Run as workload on the k8s cluster (often deployments).</li>
 <li>Exposed externally by a <code>NodePort</code> or <code>LoadBalancer</code> service.</li>
 <li>Allows to multiplex multiple services behind the same LoadBalancer.</li>
 </ul>
 </section><section>
 <ul>
 <li>
-<p>Brings interesting features</p>
+<p>Brings cools features on top</p>
 <ul>
-<li>Standarized HTTP routing (Host, Path, Headers&hellip;)</li>
+<li>HTTP routing (Host, Path, Headers&hellip;)</li>
 <li>HTTP Middlewares (Caching, Rate Limiting, Identifier Injection)</li>
 <li>TLS termination.</li>
 </ul>
@@ -568,7 +566,7 @@ k get nodes
 </ul>
 </li>
 <li>
-<p>Some known actors: NGinx ingress (we&rsquo;re using this), HAProxy, Traefik (default on k3s) &hellip;.</p>
+<p>Some known actors: Nginx ingress (we&rsquo;re using this), HAProxy, Traefik (default on k3s) &hellip;.</p>
 </li>
 </ul>
 </section><section>
@@ -606,7 +604,7 @@ k get nodes
 <ul>
 <li>We created an Ingress resource that describes a rule to match all requests with the prefix <code>/superapp</code>
 and forward them to any endpoint of the service super-app on port 80.</li>
-<li>The ingress controller, Traefik in our case, picked this rule and configured itself to forward an requrest with path <code>/superapp</code> to one of the backends pods.</li>
+<li>The ingress controller, Traefik in our case, picked this rule and configured itself to forward an request with path <code>/superapp</code> to one of the backends pods.</li>
 </ul>
 </section><section>
 <h3 id="bounce-bounce-bounce">Bounce Bounce Bounce</h3>
