@@ -1,6 +1,6 @@
-baseURL = 'http://example.org/'
+baseURL = 'https://jlevesy.github.io/talks'
 languageCode = 'en-us'
-title = 'My New Hugo Site'
+title = 'Introduction to Kubernetes'
 theme = "reveal-hugo"
 
 [markup.goldmark.renderer]
