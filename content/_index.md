@@ -1,14 +1,8 @@
 +++
-title = "My presentation"
+title = "jlevesy's talks"
 outputs = ["Reveal"]
 +++
 
-# Hello world!
+# Available talks!
 
-This is my first slide.
-
----
-
-# Hello Mars!
-
-This is my second slide.
+- [Introduction to Kubernetes](./intro-to-k8s)
